@@ -3,9 +3,14 @@ import numpy as np
 import datetime
 
 cap = cv2.VideoCapture(1)
+vec1 = []
+vec2 = []
+
 
 #Initialize with the value "None"
 first_frame = None
+min,max = 0, 0
+
 
 while(True):
     ret, frame = cap.read()
@@ -31,7 +36,7 @@ while(True):
     #cv2.imshow("thresh", thresh)
 
     #Dilate the thresholded image to fill in holes. If bigger Iterations bigger dilate
-    thresh = cv2.dilate(thresh, None, iterations=20)
+    thresh = cv2.dilate(thresh, None, iterations=50)
     cv2.imshow("thresh", thresh)
 
     (_,cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -45,7 +50,18 @@ while(True):
         # compute the bounding box for the contour, draw it on the frame, and update the text
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        cv2.putText(frame, "Objeto: " + str(len(cnts)), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         text = "Detected!"
+
+        ####
+        vec1.append(int((x + x + w) / 2))
+        vec2.append(int((y + y + h) / 2))
+        max += 1
+
+    if max > 2:
+        for i in range(0, len(vec1), 1):
+            cv2.circle(frame, (vec1[i], vec2[i]), 5, (0, 0, 255), -1)
+
 
     # draw the text and timestamp on the frame
     cv2.putText(frame, "Status of camera: {}".format(text), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
@@ -57,5 +73,6 @@ while(True):
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
+print(vec)
 cap.release()
 cv2.destroyAllWindows()
