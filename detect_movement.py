@@ -2,7 +2,19 @@ import cv2
 import numpy as np
 import datetime
 
-cap = cv2.VideoCapture(1)
+
+#Função que recebe as coordenadas do objeto e pinta-o
+def desenhar_coordenada(x, y):
+    cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
+
+#Função que recebe uma imagem e retorna apenas a variável com os contornos
+# e os momentos, ignorando o restante da informações.
+def detectar_contornos(img):
+    (_, cnts, _) = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return cnts
+
+
+cap = cv2.VideoCapture(0)
 vec1 = []
 vec2 = []
 
@@ -23,6 +35,7 @@ while(True):
 
     #To make the image more easy to work
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
+    cv2.imshow("Gaus", gray)
 
     #Verify
     if first_frame is None:
@@ -31,37 +44,49 @@ while(True):
 
     #Compute the absolute difference between the current frame and first frame
     frame_delta = cv2.absdiff(first_frame, gray)
-    #cv2.imshow("delta", frame_delta)
     thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
-    #cv2.imshow("thresh", thresh)
 
     #Dilate the thresholded image to fill in holes. If bigger Iterations bigger dilate
-    thresh = cv2.dilate(thresh, None, iterations=50)
+    thresh = cv2.dilate(thresh, None, iterations=25)
     cv2.imshow("thresh", thresh)
 
-    (_,cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # loop over the contours
+    cnts = detectar_contornos(thresh.copy())
+
+
+    contador = 1
+    # Loop que percorre cada "contorno" detectado.
     for c in cnts:
-        # if the contour is too small, ignore it. Return the lenght of pointsq
-        if cv2.contourArea(c) < 500:
+
+        # Se o tamanho do objeto detectado for menor, ignore!
+        if cv2.contourArea(c) < 1000:
             print(cv2.contourArea(c))
             continue
+
+        #Se o tamanho do objeto detectado for muito grande, ignore!
+        #Tentative de correção do bug de inicio com a webcam do not
+        if cv2.contourArea(c) > 20000:
+            print(cv2.contourArea(c))
+            continue
+
+
 
         # compute the bounding box for the contour, draw it on the frame, and update the text
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        cv2.putText(frame, "Objeto: " + str(len(cnts)), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        cv2.putText(frame, "Objeto: " + str(contador), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         text = "Detected!"
+        contador+=1
 
         ####
         vec1.append(int((x + x + w) / 2))
         vec2.append(int((y + y + h) / 2))
         max += 1
 
-    if max > 2:
+    contador = 0
+    if max > 1:
+        print("ok")
         for i in range(0, len(vec1), 1):
-            cv2.circle(frame, (vec1[i], vec2[i]), 5, (0, 0, 255), -1)
-
+            desenhar_coordenada(vec1[i], vec2[i])
 
     # draw the text and timestamp on the frame
     cv2.putText(frame, "Status of camera: {}".format(text), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
@@ -73,6 +98,6 @@ while(True):
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-print(vec)
+
 cap.release()
 cv2.destroyAllWindows()
