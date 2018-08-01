@@ -7,6 +7,10 @@ import datetime
 def desenhar_coordenada(x, y):
     cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
 
+#Função que desenha retangulos
+def desenhar_retangulo(img, x, y, w, h):
+    cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
 #Função que recebe uma imagem e retorna apenas a variável com os contornos
 # e os momentos, ignorando o restante da informações.
 def detectar_contornos(img):
@@ -59,20 +63,19 @@ while(True):
 
         # Se o tamanho do objeto detectado for menor, ignore!
         if cv2.contourArea(c) < 1000:
-            print(cv2.contourArea(c))
+            print("Menor")
             continue
 
         #Se o tamanho do objeto detectado for muito grande, ignore!
         #Tentative de correção do bug de inicio com a webcam do not
         if cv2.contourArea(c) > 20000:
-            print(cv2.contourArea(c))
+            print("Maior")
             continue
-
 
 
         # compute the bounding box for the contour, draw it on the frame, and update the text
         (x, y, w, h) = cv2.boundingRect(c)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        desenhar_retangulo(frame, x,y,w,h)
         cv2.putText(frame, "Objeto: " + str(contador), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         text = "Detected!"
         contador+=1
@@ -84,7 +87,6 @@ while(True):
 
     contador = 0
     if max > 1:
-        print("ok")
         for i in range(0, len(vec1), 1):
             desenhar_coordenada(vec1[i], vec2[i])
 
@@ -93,7 +95,7 @@ while(True):
     cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
     # show the frame and record if the user presses a key
-    cv2.imshow("Vision of place", frame)
+    cv2.imshow("Visão do ambiente", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
